@@ -1,0 +1,4 @@
+public function __toString() {
+        return sprintf(" titulo: %s\n autor: %s\n genero: %s\n nquantidadePaginas: %s\n valorPago: %s\n",
+            $this->titulo, $this->autor, $this->genero, $this->quantidadePaginas, $this->valorPago);
+        }
