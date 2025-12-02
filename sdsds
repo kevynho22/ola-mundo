@@ -1,4 +1,83 @@
-public function __toString() {
-        return sprintf(" titulo: %s\n autor: %s\n genero: %s\n nquantidadePaginas: %s\n valorPago: %s\n",
-            $this->titulo, $this->autor, $this->genero, $this->quantidadePaginas, $this->valorPago);
+<?php
+require_once("modelo/Cliente.php");
+require_once("modelo/ClientePF.php");
+require_once("modelo/ClientePJ.php");
+class ClientesDao
+{
+    public function inserir(Cliente $cliente)
+    {
+        $SQL = "INSERT INTO clientes (tipo, nome_social, email, nome, cpf, razao_social, cnpj) 
+                VALUES (?, ?, ?, ?, ?, ?, ?)";
+        $conn = Conexao::getConexao();
+        $stmt = $conn->prepare($SQL);
+
+        if ($cliente instanceof ClientePF) {
+
+            $stmt->execute(array(
+                $cliente->getTipo(),
+                $cliente->getNomeSocial(),
+                $cliente->getEmail(),
+                $cliente->getNome(),
+                $cliente->getCpf(),
+                NULL,
+                NULL
+            ));
+        } else if ($cliente instanceof ClientePJ) {
+            $stmt->execute(array(
+                $cliente->getTipo(),
+                $cliente->getNomeSocial(),
+                $cliente->getEmail(),
+                NULL,
+                NULL,
+                $cliente->getRazaoSocial(),
+                $cliente->getCnpj()
+            ));
         }
+    }
+    public function listar()
+    {
+        $SQL = "SELECT * FROM clientes";
+        $conn = Conexao::getConexao();
+        $stmt = $conn->prepare($SQL);
+        $stmt->execute();
+        $dados = $stmt->fetchAll();
+
+        $clientes = $this->map($dados);
+        return $clientes;
+    }
+    public function buscarPorId(int $idcliente)
+    {
+
+        $sql = "SELECT * FROM clientes WHERE id = ?";
+        $conn = Conexao::getConexao();
+        $stmt = $conn->prepare($sql);
+        $stmt->execute(array($idcliente));
+        $dados = $stmt->fetchAll();
+        $clientes = $this->map($dados);
+        if (! empty($clientes)) {
+            return $clientes[0];
+        }
+        return null;
+    }
+    private function map($dados)
+    {
+        $clientes = array();
+        foreach ($dados as $d) {
+            $cliente = null;
+            if ($d['tipo'] == 'F') {
+                $Cliente = new ClientePF;
+                $Cliente->setNome($d['nome']);
+                $Cliente->setCpf($d['cpf']);
+            } else {
+                $Cliente =  new ClientePJ;
+                $Cliente->setRazaoSocial($d['razao_social']);
+                $Cliente->setCnpj($d['cnpj']);
+            }
+            $Cliente->setId($d['id']);
+            $Cliente->setNomeSocial($d['nome_social']);
+            $Cliente->setEmail($d['email']);
+            array_push($clientes, $Cliente);
+        }
+        return $clientes;
+    }
+}
