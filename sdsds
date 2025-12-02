@@ -1,83 +1,88 @@
 <?php
-require_once("modelo/Cliente.php");
+
 require_once("modelo/ClientePF.php");
 require_once("modelo/ClientePJ.php");
-class ClientesDao
-{
-    public function inserir(Cliente $cliente)
-    {
-        $SQL = "INSERT INTO clientes (tipo, nome_social, email, nome, cpf, razao_social, cnpj) 
-                VALUES (?, ?, ?, ?, ?, ?, ?)";
-        $conn = Conexao::getConexao();
-        $stmt = $conn->prepare($SQL);
+require_once("dao/ClientesDao.php");
+require_once("util/Conexao.php");
 
-        if ($cliente instanceof ClientePF) {
 
-            $stmt->execute(array(
-                $cliente->getTipo(),
-                $cliente->getNomeSocial(),
-                $cliente->getEmail(),
-                $cliente->getNome(),
-                $cliente->getCpf(),
-                NULL,
-                NULL
-            ));
-        } else if ($cliente instanceof ClientePJ) {
-            $stmt->execute(array(
-                $cliente->getTipo(),
-                $cliente->getNomeSocial(),
-                $cliente->getEmail(),
-                NULL,
-                NULL,
-                $cliente->getRazaoSocial(),
-                $cliente->getCnpj()
-            ));
-        }
-    }
-    public function listar()
-    {
-        $SQL = "SELECT * FROM clientes";
-        $conn = Conexao::getConexao();
-        $stmt = $conn->prepare($SQL);
-        $stmt->execute();
-        $dados = $stmt->fetchAll();
+//Teste da conexão com o banco
+/*
+require_once("util/Conexao.php");
+$pdo = Conexao::getConexao();
+print_r($pdo);
+exit;
+*/
 
-        $clientes = $this->map($dados);
-        return $clientes;
-    }
-    public function buscarPorId(int $idcliente)
-    {
+do {
+    echo "\n\n----CADASTRO DE CLIENTES----\n";
+    echo "1- Cadastrar Cliente PF\n";
+    echo "2- Cadastrar Cliente PJ\n";
+    echo "3- Listar Clientes\n";
+    echo "4- Buscar Cliente\n";
+    echo "5- Excluir Cliente\n";
+    echo "0- Sair\n";
 
-        $sql = "SELECT * FROM clientes WHERE id = ?";
-        $conn = Conexao::getConexao();
-        $stmt = $conn->prepare($sql);
-        $stmt->execute(array($idcliente));
-        $dados = $stmt->fetchAll();
-        $clientes = $this->map($dados);
-        if (! empty($clientes)) {
-            return $clientes[0];
-        }
-        return null;
-    }
-    private function map($dados)
-    {
-        $clientes = array();
-        foreach ($dados as $d) {
-            $cliente = null;
-            if ($d['tipo'] == 'F') {
-                $Cliente = new ClientePF;
-                $Cliente->setNome($d['nome']);
-                $Cliente->setCpf($d['cpf']);
-            } else {
-                $Cliente =  new ClientePJ;
-                $Cliente->setRazaoSocial($d['razao_social']);
-                $Cliente->setCnpj($d['cnpj']);
+    $opcao = readline("\nInforme a opção:");
+    switch ($opcao) {
+        case 1:
+
+            $clientePF = new ClientePF();
+            $clientePF->setNomeSocial(readline("informe o Nome Social: "));
+            $clientePF->setEmail(readline("informe o E-mail: "));
+            $clientePF->setNome(readline("informe o Nome: "));
+            $clientePF->setCpf(readline("informe o CPF: "));
+
+            $dao = new ClientesDao();
+            $dao->inserir($clientePF);
+            echo "Cliente PF inserido com sucesso! \n";
+
+            break;
+
+        case 2:
+            $clientePJ = new ClientePJ();
+            $clientePJ->setNomeSocial(readline("informe o Nome Social: "));
+            $clientePJ->setEmail(readline("informe o E-mail: "));
+            $clientePJ->setRazaoSocial(readline("informe a Razão Social: "));
+            $clientePJ->setCnpj(readline("informe o CNPJ: "));
+            $dao = new ClientesDao();
+            $dao->inserir($clientePJ);
+            echo "Cliente PJ inserido com sucesso!\n";
+            break;
+
+        case 3:
+            $dao = new ClientesDao();
+            $clientes = $dao->listar();
+            foreach ($clientes as $c) {
+                echo $c . "\n";
             }
-            $Cliente->setId($d['id']);
-            $Cliente->setNomeSocial($d['nome_social']);
-            $Cliente->setEmail($d['email']);
-            array_push($clientes, $Cliente);
-        }
-        return $clientes;
+
+            break;
+
+        case 4:
+            //1 ler id do cliente a ser buscar
+ $id = readline("Informe o ID do cliente: ");
+ //2 obter o cliente do banco de dados e imprimí -lo
+            $dao = new ClientesDao();
+            $cliente = $dao->buscarPorId($id);
+            if($cliente != null)
+            echo $cliente . "\n";
+        else
+        echo "cliente nao encontrado!\n";
+
+          
+            break;
+
+        case 5:
+            echo "Não implementado!\n";
+            break;
+
+        case 0:
+            echo "Programa encerrado!\n";
+            break;
+
+        default:
+            echo "Opção inválida!";
     }
-}
+} while ($opcao != 0);
+
